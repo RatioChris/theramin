@@ -3,6 +3,7 @@ var theremin = function() {
 
 	// params
 	var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1,
+		isTouch = 'ontouchstart' in window,
 		x = 0,
 		y = 0;
 
@@ -22,15 +23,15 @@ var theremin = function() {
 	var bindEvents = function() {
 		var stage = document.querySelector("canvas");
 
-		// mouse events
-		stage.addEventListener("mouseover", on, false);
-		stage.addEventListener("mouseout", off, false);
-		stage.addEventListener("mousemove", modulate, false);
-
-		// touch events
-		stage.addEventListener("touchstart", on, false);
-		stage.addEventListener("touchend", off, false);
-		stage.addEventListener("touchmove", modulate, false);
+		if (isTouch) {
+			stage.addEventListener("touchstart", on, false);
+			stage.addEventListener("touchend", off, false);
+			stage.addEventListener("touchmove", modulate, false);
+		} else {
+			stage.addEventListener("mouseover", on, false);
+			stage.addEventListener("mouseout", off, false);
+			stage.addEventListener("mousemove", modulate, false);
+		}
 
 		document.querySelector(".type").onclick = function(e) {
 			setType(e);
@@ -65,13 +66,13 @@ var theremin = function() {
 	}
 
 	var setFrequency = function(e) {
-		x = e.clientX;
+		x = isTouch ? e.touches[0].pageX : e.clientX;
 		frequency = (1705 * x/window.innerWidth) + 55; // 5 octaves between A1 (55Hz) and A6 (1760Hz)  // 27.5 --> 4186
 		oscillator.frequency.value = Math.round(frequency);
 	}
 
 	var setGain = function(e) {
-		y = e.clientY;
+		y = isTouch ? e.touches[0].pageY : e.clientY;
 		gain = 1 - y/window.innerHeight;
 		gainNode.gain.value = gain;
 	}
