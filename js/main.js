@@ -1,70 +1,79 @@
 var theremin = function() {
 	"use strict";
 
+	// params
+	var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1,
+		x = 0,
+		y = 0;
+
+	// audio params
 	var context,
 		oscillator,
 		type = 'SINE',
-		instrument = document.querySelector("canvas"),
-		gainNode;
+		gainNode,
+		frequency,
+		gain;
 
 	var init = function() {
-		context = new AudioContext;
+		context = new (window.AudioContext || window.webkitAudioContext)();
 		bindEvents();
 	}
 
 	var bindEvents = function() {
+		var stage = document.querySelector("canvas");
+
 		// mouse events
-		instrument.addEventListener("mousedown", on, false);
-		instrument.addEventListener("mouseup", off, false);
-		instrument.addEventListener("mousemove", move, false);
+		stage.addEventListener("mouseover", on, false);
+		stage.addEventListener("mouseout", off, false);
+		stage.addEventListener("mousemove", modulate, false);
 
 		// touch events
-		instrument.addEventListener("touchstart", on, false);
-		instrument.addEventListener("touchend", off, false);
-		instrument.addEventListener("touchmove", move, false);
+		stage.addEventListener("touchstart", on, false);
+		stage.addEventListener("touchend", off, false);
+		stage.addEventListener("touchmove", modulate, false);
 
 		document.querySelector(".type").onclick = function(e) {
 			setType(e);
 		};
-
-
-		window.addEventListener('deviceproximity', function(e) {
-			console.log("value: " + e.value, "max: " + e.max, "min: " + e.min);
-		});
-
-		window.addEventListener('devicelight', function(e) {
-			console.log("lux: " + e.value);
-		});
 	}
 
-	var setType = function(e) {
-		type = e.target.textContent.toUpperCase();
-		console.log(type);
-	}
-
-	var on = function() {
+	var on = function(e) {
 		console.log('on');
 		oscillator = context.createOscillator();
-		oscillator.type = oscillator[type];
+		oscillator.type = isFirefox ? type.toLowerCase() : oscillator[type.toUpperCase()];
 		gainNode = context.createGain();
 		oscillator.connect(gainNode);
 		gainNode.connect(context.destination);
-		oscillator.start();
+		oscillator.start(0);
+		modulate(e);
 	}
 
 	var off = function() {
 		console.log('off');
-		oscillator.stop();
+		oscillator.stop(0);
 	}
 
-	var move = function(e) {
+	var modulate = function(e) {
 		if (!oscillator) return;
-		var horizontalPos = e.clientX;
-		var verticalPos = e.clientY;
-		var frequencyVal = (1705 * horizontalPos/window.innerWidth) + 55; // 5 octaves between A1 (55Hz) and A6 (1760Hz)  // 27.5 --> 4186
-		var gainVal = 1 - verticalPos/window.innerHeight;
-		oscillator.frequency.value = Math.round(frequencyVal);
-		gainNode.gain.value = gainVal;
+		setFrequency(e);
+		setGain(e);
+	}
+
+	var setType = function(e) {
+		type = e.target.textContent;
+		console.log(type);
+	}
+
+	var setFrequency = function(e) {
+		x = e.clientX;
+		frequency = (1705 * x/window.innerWidth) + 55; // 5 octaves between A1 (55Hz) and A6 (1760Hz)  // 27.5 --> 4186
+		oscillator.frequency.value = Math.round(frequency);
+	}
+
+	var setGain = function(e) {
+		y = e.clientY;
+		gain = 1 - y/window.innerHeight;
+		gainNode.gain.value = gain;
 	}
 
 	return {
