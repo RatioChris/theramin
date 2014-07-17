@@ -27,17 +27,17 @@ var theremin = function() {
 		var stage = document.querySelector("canvas");
 
 		if (isTouch) {
-			stage.addEventListener("touchstart", on, false);
-			stage.addEventListener("touchend", off, false);
-			stage.addEventListener("touchmove", modulate, false);
+			stage.addEventListener("touchstart", on);
+			stage.addEventListener("touchend", off);
+			stage.addEventListener("touchmove", modulate);
 			/*stage.addEventListener("touchmove", function(e) {
 				e.preventDefault();
 				modulate();
-			}, false);*/
+			});*/
 		} else {
-			stage.addEventListener("mouseover", on, false);
-			stage.addEventListener("mouseout", off, false);
-			stage.addEventListener("mousemove", modulate, false);
+			stage.addEventListener("mouseover", on);
+			stage.addEventListener("mouseout", off);
+			stage.addEventListener("mousemove", modulate);
 		}
 
 		document.querySelector(".waveform").onclick = function(e) {
@@ -51,26 +51,27 @@ var theremin = function() {
 
 	var on = function(e) {
 		console.log('on');
-		oscillator = context.createOscillator();
+		oscillator = context.createOscillator();    // create sound source (single-use entities)
 		oscillator.type = isFirefox ? type.toLowerCase() : oscillator[type.toUpperCase()];
+
 		gainNode = context.createGain();
 		oscillator.connect(gainNode);
-		gainNode.connect(context.destination);
+		gainNode.connect(context.destination);  // connect sound to speakers
 
-		if (duration > 0) {
+		if (duration) {
 			convolver = context.createConvolver();
 			convolver.buffer = impulseResponse(duration, decay);
 			oscillator.connect(convolver);
 			convolver.connect(context.destination);
 		}
 
-		oscillator.start(0);
+		oscillator.start(context.currentTime);
 		modulate(e);
 	}
 
 	var off = function() {
 		console.log('off');
-		oscillator.stop(0);
+		oscillator.stop(context.currentTime);
 	}
 
 	var modulate = function(e) {
@@ -87,7 +88,7 @@ var theremin = function() {
 
 	var setFrequency = function(e) {
 		x = isTouch ? e.touches[0].pageX : e.clientX;
-		frequency = (1705 * x/window.innerWidth) + 55; // 5 octaves between A1 (55Hz) and A6 (1760Hz)  // 27.5 --> 4186
+		frequency = (1705 * x/window.innerWidth) + 55;  // 5 octaves between A1 (55Hz) and A6 (1760Hz)  // 27.5 --> 4186
 		oscillator.frequency.value = Math.round(frequency);
 	}
 
@@ -99,19 +100,17 @@ var theremin = function() {
 	var setReverb = function(e) {
 		duration = parseFloat(e.target.dataset.duration);
 		decay = parseFloat(e.target.dataset.decay);
-		console.log(duration, decay);
+		console.log(e.target.textContent, duration, decay);
 	}
 
 	var impulseResponse = function(duration, decay) {
-		var sampleRate = context.sampleRate,
-			length = sampleRate * duration,
-			impulse = context.createBuffer(2, length, sampleRate),
-			impulseL = impulse.getChannelData(0),
-			impulseR = impulse.getChannelData(1);
+		var sampleRate = context.sampleRate,    // audio data in sample-frames per second
+			length = sampleRate * duration,     // buffer size in sample-frames
+			impulse = context.createBuffer(1, length, sampleRate),   // 1 channel = mono
+			channel = impulse.getChannelData(0);
 
 		for (var i = 0; i < length; i++) {
-			impulseL[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
-			impulseR[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+			channel[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
 		}
 		return impulse;
 	}
