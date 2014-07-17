@@ -12,8 +12,11 @@ var theremin = function() {
 		oscillator,
 		type = 'SINE',
 		gainNode,
+		gain,
 		frequency,
-		gain;
+		convolver,
+		duration = 0,
+		decay = 0;
 
 	var init = function() {
 		context = new (window.AudioContext || window.webkitAudioContext)();
@@ -27,14 +30,22 @@ var theremin = function() {
 			stage.addEventListener("touchstart", on, false);
 			stage.addEventListener("touchend", off, false);
 			stage.addEventListener("touchmove", modulate, false);
+			/*stage.addEventListener("touchmove", function(e) {
+				e.preventDefault();
+				modulate();
+			}, false);*/
 		} else {
 			stage.addEventListener("mouseover", on, false);
 			stage.addEventListener("mouseout", off, false);
 			stage.addEventListener("mousemove", modulate, false);
 		}
 
-		document.querySelector(".type").onclick = function(e) {
-			setType(e);
+		document.querySelector(".waveform").onclick = function(e) {
+			setWaveform(e);
+		};
+
+		document.querySelector(".reverb").onclick = function(e) {
+			setReverb(e);
 		};
 	}
 
@@ -45,6 +56,14 @@ var theremin = function() {
 		gainNode = context.createGain();
 		oscillator.connect(gainNode);
 		gainNode.connect(context.destination);
+
+		if (duration > 0) {
+			convolver = context.createConvolver();
+			convolver.buffer = impulseResponse(duration, decay);
+			oscillator.connect(convolver);
+			convolver.connect(context.destination);
+		}
+
 		oscillator.start(0);
 		modulate(e);
 	}
@@ -56,13 +75,14 @@ var theremin = function() {
 
 	var modulate = function(e) {
 		if (!oscillator) return;
-		setFrequency(e);
 		setGain(e);
+		setFrequency(e);
 	}
 
-	var setType = function(e) {
-		type = e.target.textContent;
-		console.log(type);
+	var setGain = function(e) {
+		y = isTouch ? e.touches[0].pageY : e.clientY;
+		gain = 1 - y/window.innerHeight;
+		gainNode.gain.value = gain;
 	}
 
 	var setFrequency = function(e) {
@@ -71,10 +91,29 @@ var theremin = function() {
 		oscillator.frequency.value = Math.round(frequency);
 	}
 
-	var setGain = function(e) {
-		y = isTouch ? e.touches[0].pageY : e.clientY;
-		gain = 1 - y/window.innerHeight;
-		gainNode.gain.value = gain;
+	var setWaveform = function(e) {
+		type = e.target.textContent;
+		console.log(type);
+	}
+
+	var setReverb = function(e) {
+		duration = parseFloat(e.target.dataset.duration);
+		decay = parseFloat(e.target.dataset.decay);
+		console.log(duration, decay);
+	}
+
+	var impulseResponse = function(duration, decay) {
+		var sampleRate = context.sampleRate,
+			length = sampleRate * duration,
+			impulse = context.createBuffer(2, length, sampleRate),
+			impulseL = impulse.getChannelData(0),
+			impulseR = impulse.getChannelData(1);
+
+		for (var i = 0; i < length; i++) {
+			impulseL[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+			impulseR[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+		}
+		return impulse;
 	}
 
 	return {

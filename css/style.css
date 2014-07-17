@@ -2,7 +2,8 @@ html {
 	height: 100%;
 	background: #000;
 	font-family: sans-serif;
-	color: #fff;
+	color: #ccc;
+	overflow: hidden;
 }
 
 canvas {
@@ -22,12 +23,17 @@ menu {
 	margin: 0;
 	background-color: #000;
 }
+menu.reverb {
+	left: auto;
+	right: 0;
+	text-align: right;
+}
 menu h4 {
 	margin: 0;
+	color: #fff;
 }
 menu span {
 	display: block;
-	color: #ccc;
 	cursor: pointer;
 }
 menu span:hover {
