@@ -33,10 +33,10 @@ var theremin = function() {
 		var sampleRate = context.sampleRate,    // audio data in sample-frames per second
 			length = sampleRate * duration,     // buffer size in sample-frames
 			impulse = context.createBuffer(1, length, sampleRate),   // 1 channel = mono
-			channel = impulse.getChannelData(0);
+			data = impulse.getChannelData(0);
 
 		for (var i = 0; i < length; i++) {
-			channel[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+			data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
 		}
 		return impulse;
 	}
@@ -53,11 +53,10 @@ var theremin = function() {
 		if (isTouch) {
 			stage.addEventListener("touchstart", on);
 			stage.addEventListener("touchend", off);
-			stage.addEventListener("touchmove", modulate);
-			/*stage.addEventListener("touchmove", function(e) {
-			 e.preventDefault();
-			 modulate();
-			 });*/
+			stage.addEventListener("touchmove", function(e) {
+				e.preventDefault();
+				modulate();
+			});
 		} else {
 			stage.addEventListener("mouseover", on);
 			stage.addEventListener("mouseout", off);
