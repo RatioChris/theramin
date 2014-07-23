@@ -1,9 +1,12 @@
 html {
-	height: 100%;
 	background: #000;
 	font-family: sans-serif;
 	color: #ccc;
+}
+html, body {
+	height: 100%;
 	overflow: hidden;
+	margin: 0;
 }
 
 canvas {

@@ -1,14 +1,13 @@
-var theremin = function() {
+var theremin = (function() {
 	"use strict";
 
 	/** config params */
-	var isTouch = 'ontouchstart' in window,
-		isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+	var isTouch = 'ontouchstart' in window;
 
 	/** audio params */
 	var context,
 		oscillator,
-		type = 'SINE',
+		type = 'sine',
 		convolver,
 		duration = 0,
 		decay = 0;
@@ -16,10 +15,10 @@ var theremin = function() {
 	/** constructors */
 	var Oscillator = function() {
 		this.osc = context.createOscillator();  // create sound source
+		this.osc.type = type;
 		this.amp = context.createGain();
 		this.osc.connect(this.amp);
 		this.amp.connect(context.destination);  // connect sound to speakers
-		this.osc.type = isFirefox ? type.toLowerCase() : this.osc[type.toUpperCase()];
 	}
 
 	var Convolver = function() {
@@ -53,10 +52,7 @@ var theremin = function() {
 		if (isTouch) {
 			stage.addEventListener("touchstart", on);
 			stage.addEventListener("touchend", off);
-			stage.addEventListener("touchmove", function(e) {
-				e.preventDefault();
-				modulate();
-			});
+			stage.addEventListener("touchmove", modulate);
 		} else {
 			stage.addEventListener("mouseover", on);
 			stage.addEventListener("mouseout", off);
@@ -119,6 +115,6 @@ var theremin = function() {
 	return {
 		init: init
 	}
-}();
+}());
 
 window.addEventListener("DOMContentLoaded", theremin.init, true);
