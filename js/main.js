@@ -1,4 +1,4 @@
-var theremin = (function() {
+(function() {
 	"use strict";
 
 	/** config params */
@@ -50,6 +50,9 @@ var theremin = (function() {
 		var stage = document.querySelector("canvas");
 
 		if (isTouch) {
+			document.addEventListener("touchmove",function(e) {
+				e.preventDefault(); // prevent elastic scroll on iOS
+			});
 			stage.addEventListener("touchstart", on);
 			stage.addEventListener("touchend", off);
 			stage.addEventListener("touchmove", modulate);
@@ -112,9 +115,5 @@ var theremin = (function() {
 		console.log(e.target.textContent);
 	}
 
-	return {
-		init: init
-	}
+	window.addEventListener("DOMContentLoaded", init, true);
 }());
-
-window.addEventListener("DOMContentLoaded", theremin.init, true);
