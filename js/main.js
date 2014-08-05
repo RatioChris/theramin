@@ -10,7 +10,11 @@
 		type = 'sine',
 		convolver,
 		duration = 0,
-		decay = 0;
+		decay = 0,
+		tremolo = 0,
+		vibrato = 0,
+		tremoloFrame,
+		vibratoFrame;
 
 	/** constructors */
 	var Oscillator = function() {
@@ -65,7 +69,12 @@
 		document.querySelector(".waveform").onclick = function(e) {
 			setWaveform(e);
 		};
-
+		document.querySelector(".tremolo").onclick = function(e) {
+			setTremolo(e);
+		};
+		document.querySelector(".vibrato").onclick = function(e) {
+			setVibrato(e);
+		};
 		document.querySelector(".reverb").onclick = function(e) {
 			setReverb(e);
 		};
@@ -76,12 +85,21 @@
 		oscillator.osc.start(context.currentTime);
 		modulate(e);
 
-		if (duration)
+		if (duration && decay)
 			convolver = new Convolver();
+
+		if (tremolo)
+			shapeTremolo();
+
+		if (vibrato)
+			shapeVibrato();
 	}
 
 	var off = function() {
 		oscillator.osc.stop(context.currentTime);
+
+		cancelAnimationFrame(tremoloFrame);
+		cancelAnimationFrame(vibratoFrame);
 	}
 
 	var modulate = function(e) {
@@ -92,27 +110,54 @@
 
 	var setGain = function(e) {
 		var y = isTouch ? e.touches[0].pageY : e.clientY,
-			gain = 1 - y/window.innerHeight;
+			val = 1 - y/window.innerHeight;
 
-		oscillator.amp.gain.value = gain;
+		oscillator.amp.gain.value = val;
 	}
 
 	var setFrequency = function(e) {
 		var x = isTouch ? e.touches[0].pageX : e.clientX,
-			frequency = (1705 * x/window.innerWidth) + 55;  // 5 octaves between A1 (55Hz) and A6 (1760Hz)  // 27.5 --> 4186
+			val = (1705 * x/window.innerWidth) + 55;  // 5 octaves between A1 (55Hz) and A6 (1760Hz)  // 27.5 --> 4186
 
-		oscillator.osc.frequency.value = Math.round(frequency);
+		oscillator.osc.frequency.value = Math.round(val);
 	}
 
 	var setWaveform = function(e) {
 		type = e.target.textContent;
-		console.log(type);
+		console.log('waveform: ' + type);
 	}
 
 	var setReverb = function(e) {
 		duration = parseFloat(e.target.dataset.duration);
 		decay = parseFloat(e.target.dataset.decay);
-		console.log(e.target.textContent);
+		console.log('reverb: ' + e.target.textContent);
+	}
+
+	var setTremolo = function(e) {
+		tremolo = parseFloat(e.target.dataset.tremolo);
+		console.log('tremolo: ' + e.target.textContent);
+	}
+
+	var setVibrato = function(e) {
+		vibrato = parseFloat(e.target.dataset.vibrato);
+		console.log('vibrato: ' + e.target.textContent);
+	}
+
+	var shapeTremolo = function() {
+		var gain = oscillator.amp.gain.value,
+			val = gain + (Math.sin(context.currentTime * tremolo) * .25);
+
+		console.log(gain, val);
+		oscillator.amp.gain.value = val;
+		tremoloFrame = requestAnimationFrame(shapeTremolo);
+	}
+
+	var shapeVibrato = function() {
+		var freq = oscillator.osc.frequency.value,
+			val = freq + (Math.sin(context.currentTime * 20) * vibrato);
+
+		oscillator.osc.frequency.value = val;
+		vibratoFrame = requestAnimationFrame(shapeVibrato);
 	}
 
 	window.addEventListener("DOMContentLoaded", init, true);

@@ -1,3 +1,8 @@
+*,
+::before,
+::after {
+	box-sizing: border-box;
+}
 html {
 	background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 75%), linear-gradient(to right, red, purple);
 	font-family: sans-serif;
@@ -17,18 +22,18 @@ canvas {
 	height: 100%;
 }
 
-menu {
-	position: absolute;
+footer {
+	position: fixed;
 	left: 0;
 	bottom: 0;
+	width: 100%;
+}
+
+menu {
+	float: left;
+	width: 25%;
 	padding: 10px;
 	margin: 0;
-	background-color: #000;
-}
-menu.reverb {
-	left: auto;
-	right: 0;
-	text-align: right;
 }
 menu h4 {
 	margin: 0;
