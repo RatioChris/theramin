@@ -1,11 +1,9 @@
 (function() {
 	"use strict";
 
-	/** config params */
-	var isTouch = 'ontouchstart' in window;
-
-	/** audio params */
-	var context,
+	/** params */
+	var isTouch = 'ontouchstart' in window,
+		context,
 		oscillator,
 		type = 'sine',
 		convolver,
@@ -13,8 +11,8 @@
 		decay = 0,
 		tremolo = 0,
 		vibrato = 0,
-		tremoloFrame,
-		vibratoFrame;
+		volumeFrame,
+		pitchFrame;
 
 	/** constructors */
 	var Oscillator = function() {
@@ -46,7 +44,13 @@
 
 	/** methods */
 	var init = function() {
-		context = new (window.AudioContext || window.webkitAudioContext)();
+		try {
+			context = new (window.AudioContext || window.webkitAudioContext)();
+		}
+		catch(e) {
+			document.querySelector('body').innerHTML = '<h3>Web Audio API not supported</h3>';
+			return;
+		}
 		bindEvents();
 	}
 
@@ -89,33 +93,33 @@
 			convolver = new Convolver();
 
 		if (tremolo)
-			shapeTremolo();
+			setVolumeFluxuation();
 
 		if (vibrato)
-			shapeVibrato();
+			setPitchFluxuation();
 	}
 
 	var off = function() {
 		oscillator.osc.stop(context.currentTime);
 
-		cancelAnimationFrame(tremoloFrame);
-		cancelAnimationFrame(vibratoFrame);
+		cancelAnimationFrame(volumeFrame);
+		cancelAnimationFrame(pitchFrame);
 	}
 
 	var modulate = function(e) {
 		if (!oscillator) return;
-		setGain(e);
-		setFrequency(e);
+		setVolume(e);
+		setPitch(e);
 	}
 
-	var setGain = function(e) {
+	var setVolume = function(e) {
 		var y = isTouch ? e.touches[0].pageY : e.clientY,
 			val = 1 - y/window.innerHeight;
 
 		oscillator.amp.gain.value = val;
 	}
 
-	var setFrequency = function(e) {
+	var setPitch = function(e) {
 		var x = isTouch ? e.touches[0].pageX : e.clientX,
 			val = (1705 * x/window.innerWidth) + 55;  // 5 octaves between A1 (55Hz) and A6 (1760Hz)  // 27.5 --> 4186
 
@@ -143,21 +147,20 @@
 		console.log('vibrato: ' + e.target.textContent);
 	}
 
-	var shapeTremolo = function() {
-		var gain = oscillator.amp.gain.value,
-			val = gain + (Math.sin(context.currentTime * tremolo) * .25);
+	var setVolumeFluxuation = function() {
+		var cur = oscillator.amp.gain.value,
+			val = cur + (Math.sin(context.currentTime * tremolo) * .2);
 
-		console.log(gain, val);
 		oscillator.amp.gain.value = val;
-		tremoloFrame = requestAnimationFrame(shapeTremolo);
+		volumeFrame = requestAnimationFrame(setVolumeFluxuation);
 	}
 
-	var shapeVibrato = function() {
-		var freq = oscillator.osc.frequency.value,
-			val = freq + (Math.sin(context.currentTime * 20) * vibrato);
+	var setPitchFluxuation = function() {
+		var cur = oscillator.osc.frequency.value,
+			val = cur + (Math.sin(context.currentTime * 20) * vibrato);
 
 		oscillator.osc.frequency.value = val;
-		vibratoFrame = requestAnimationFrame(shapeVibrato);
+		pitchFrame = requestAnimationFrame(setPitchFluxuation);
 	}
 
 	window.addEventListener("DOMContentLoaded", init, true);
